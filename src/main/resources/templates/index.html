@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<form id="add-city">
+    <table>
+        <tr>
+            <td>name</td>
+            <td><input type="text" id="name" placeholder="city name"></td>
+        </tr>
+        <tr>
+            <td>country</td>
+            <td>
+                <select id="country"></select>
+            </td>
+        </tr>
+        <tr>
+            <td>area</td>
+            <td><input type="text" id="area" placeholder="area"></td>
+        </tr>
+        <tr>
+            <td>population</td>
+            <td><input type="text" id="population" placeholder="population"></td>
+        </tr>
+        <tr>
+            <td>gdp</td>
+            <td><input type="text" id="gdp" placeholder="gdp "></td>
+        </tr>
+        <tr>
+            <td>description</td>
+            <td><input type="text" id="description" placeholder="description "></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><input type="submit" onclick="addNewCity()" value="Add"></td>
+        </tr>
+    </table>
+</form>
+<h1>list city</h1>
+<table id="cityList" border="1"></table>
+<form id="form"></form>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript">
+    window.onload=function (){
+        findAllCountry()
+        successHandler()
+    }
+    function addNewCity() {
+        let name = $('#name').val();
+        let country = $('#country').val();
+        let area = $('#area').val();
+        let population = $('#population').val();
+        let gdp  = $('#gdp').val();
+        let description  = $('#description').val();
+
+        let newCity = {
+            name:name,
+            country: {
+                id: country
+            },
+            area: area,
+            population: population,
+            gdp: gdp,
+            description: description,
+        };
+        $.ajax({
+            //chuyển dữ liệu vè json
+            headers: { 'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            type: "POST",
+            data: JSON.stringify(newCity),
+            url: "/cities",
+            success: successHandler
+
+        });
+        //chặn sự kiện
+        event.preventDefault();
+    }
+
+    function successHandler() {
+        $.ajax({
+            type: "GET",
+            url: "/cities",
+            success: function (data) {
+                console.log(data)
+                let content = '    <tr>\n' +
+                    '        <td>Name</td>\n' +
+                    '        <td>country</td>\n' +
+                    '        <td>area</td>\n' +
+                    '        <td>population</td>\n' +
+                    '        <td>gdp</td>\n' +
+                    '        <td>description</td>\n' +
+                    '    </tr>';
+                for (let i = 0; i < data.length; i++) {
+                    content += getCity(data[i]);
+                }
+                document.getElementById('cityList').innerHTML = content;
+            }
+        });
+    }
+    function getCity(city) {
+        return `<tr>`+
+            `<td >${city.name}</td>`+
+            `<td >${city.country.name}</td>`  +
+            `<td >${city.area}</td>` +
+            `<td >${city.population}</td>` +
+            `<td >${city.gdp}</td>` +
+            `<td >${city.description}</td>` +
+            `<td>
+                <button onclick="showFormEdit(${city.id})" class="updatecitys" >
+                Update
+                </button>
+                </td>`+
+            `<td>
+                <button onclick="onDelete(${city.id})" class="deletecitys" >Delete</button>
+                </td>` +
+            `</tr>`;
+    }
+    function onDelete(id) {
+        $.ajax({
+            type: "DELETE",
+            url: "/cities/" + id,
+            success: successHandler
+        })
+    }
+    function findAllCountry() {
+        $.ajax({
+            type: "GET",
+            url: "/countries",
+            success: function (data) {
+                let content = '';
+                for (let i = 0; i < data.length; i++) {
+                    content += getCountry(data[i]);
+                }
+                document.getElementById('country').innerHTML = content;
+            }
+
+        })
+    }
+    function findAllCountry1() {
+        $.ajax({
+            type: "GET",
+            url: "/countries",
+            success: function (data) {
+                let content = '';
+                for (let i = 0; i < data.length; i++) {
+                    content += getCountry(data[i]);
+                }
+                document.getElementById('country1').innerHTML = content;
+            }
+
+        })
+    }
+    function getCountry(country) {
+        return `<option value="${country.id}">${country.name}</option>`;
+    }
+    function showFormEdit(id) {
+        let str = '<h3>Edit City</h3>' +
+            '<input type="hidden" id="id">' +
+            '<table>' +
+            '<tr>' +
+            '<td>Name:</td>' +
+            '<td><input type="text" id="name1" placeholder="Name"></td>' +
+            '</tr>' +
+            '<td>country:</td>' +
+            '<td><select id="country1">' +
+            findAllCountry1() +
+            '</select></td>' +
+            '</tr>' +
+            '<tr>' +
+            '<td>area:</td>' +
+            '<td><input type="text" id="area1" placeholder="area"></td>' +
+            '</tr>' +
+            '<tr>' +
+            '<td>population:</td>' +
+            '<td><input type="text" id="population1" placeholder="population"></td>' +
+            '</tr>' +
+            '<tr>' +
+            '<td>gdp:</td>' +
+            '<td><input type="text" id="gdp1" placeholder="gdp"></td>' +
+            '</tr>' +
+            '<tr>' +
+            '<td>Description:</td>' +
+            '<td><input type="text" id="description1" placeholder="Description"></td>' +
+            '</tr>' +
+            '<tr>' +
+            '<tr>' +
+            '<td></td>' +
+            '<td><input type="button" value="Update" onclick="saveEdit()"></td>' +
+            '</tr>' +
+            '</table>';
+        document.getElementById("form").innerHTML = str;
+        $.ajax({
+            type: "GET",
+            //tên API
+            url: "/cities/" + id,
+            //xử lý khi thành công
+            success: function (data) {
+                let idData = id;
+                let name = data.name;
+                let countryId = data.country.id;
+                let area = data.area;
+                let population = data.population;
+                let gdp = data.gdp;
+                let description = data.description;
+                document.getElementById("id").value = idData;
+                document.getElementById("name1").value = name;
+                document.getElementById("country1").value = countryId;
+                document.getElementById("area1").value = area;
+                document.getElementById("population1").value = population;
+                document.getElementById("gdp1").value = gdp;
+                document.getElementById("description1").value = description;
+            }
+        });
+    }
+    function saveEdit() {
+        let id = document.getElementById("id").value;
+        let city = {
+            name: document.getElementById("name1").value,
+            country:{
+                id : document.getElementById("country1").value
+            },
+            area: document.getElementById("area1").value,
+            population: document.getElementById("population1").value,
+            gdp: document.getElementById("gdp1").value,
+            description: document.getElementById("description1").value
+
+        }
+        $.ajax({
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            type: "PUT",
+            url: "/cities/edit/" + id ,
+            data: JSON.stringify(city),
+            success: successHandler,
+
+        });
+
+    }
+
+</script>
+</body>
+</html>
